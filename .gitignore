@@ -72,3 +72,7 @@ replay_pid*
 
 # Ignore Kotlin plugin data
 .kotlin
+
+# Special exceptions
+!app/src/main/resources/
+!app/src/main/resources/**
