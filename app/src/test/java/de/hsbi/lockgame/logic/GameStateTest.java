@@ -53,7 +53,6 @@ public class GameStateTest {
         assertNotNull(level);
         List<Position> positionSnake = new ArrayList<Position>();
         positionSnake.add(level.snakeStart());
-
         Snake snake = new Snake(positionSnake);
         // when
         GameState state =
@@ -68,6 +67,33 @@ public class GameStateTest {
         state = updateState(state, Direction.RIGHT);
         state.tick();
         // then
+        // the game should be over
         assertEquals(GameState.Status.LOST_SELF_COLLISION, state.status());
+    }
+
+    @Test
+    public void testInteractionLockPicked() {
+        // given
+        Level level = this.defaultLevel();
+        assertNotNull(level);
+        List<Position> positionSnake = new ArrayList<Position>();
+        positionSnake.add(level.snakeStart());
+        Snake snake = new Snake(positionSnake);
+        // when
+        GameState state =
+                new GameState(level, snake, level.pins(), GameState.Status.RUNNING, Direction.NONE);
+        // we get the pins and then navigate the snake to a pin and compare the pins before and
+        // after
+        List<Pin> pinsBefore = state.pins();
+        state = updateState(state, Direction.LEFT);
+        state.tick();
+        state = updateState(state, Direction.LEFT);
+        state.tick();
+        state = updateState(state, Direction.LEFT);
+        state.tick();
+        List<Pin> pinsAfter = state.pins();
+        // then
+        // the list should not be equal because of a different pin
+        assertNotEquals(pinsAfter, pinsBefore);
     }
 }

@@ -16,7 +16,8 @@ public final class GameState {
         // TODO: lege einen neuen GameState mit den übergebenen Informationen an
         this.level = level;
         this.snake = snake;
-        this.pins = pins;
+        // we need a copy of pins else we cannot set the state
+        this.pins = new java.util.ArrayList<>(pins);
         this.status = status;
         this.pendingDirection = pendingDirection;
         // throw new UnsupportedOperationException("method not implemented yet");
@@ -72,7 +73,8 @@ public final class GameState {
         Position nextPosition = this.snake.nextHead(pendingDirection);
         Pin nextPositionPin = null;
         for (Pin pin : this.pins) {
-            if (pin.position() == nextPosition) {
+            if (nextPosition.equals(pin.position())) {
+                IO.println("pin is next up");
                 nextPositionPin = pin;
                 break;
             }
@@ -96,9 +98,11 @@ public final class GameState {
                         && !nextPositionPin.state().isSet()
                         && this.pendingDirection == nextPositionPin.activationDirection();
         if (canActivatePin) {
-            this.pins.remove(nextPositionPin);
-            nextPositionPin = nextPositionPin.withState(Pin.State.HIGH);
-            this.pins.add(nextPositionPin);
+            int idx = pins.indexOf(nextPositionPin);
+            if (idx >= 0) {
+                Pin pinNew = nextPositionPin.withState(Pin.State.HIGH);
+                pins.set(idx, pinNew);
+            }
         }
 
         if (this.status.isRunning()) {
