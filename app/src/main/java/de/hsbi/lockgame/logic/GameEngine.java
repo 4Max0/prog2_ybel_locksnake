@@ -41,7 +41,7 @@ public final class GameEngine {
                         new Snake(positionSnake),
                         level.pins(),
                         GameState.Status.RUNNING,
-                        Direction.UP);
+                        Direction.NONE);
         // throw new UnsupportedOperationException("method not implemented yet");
     }
 

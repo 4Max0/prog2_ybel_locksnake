@@ -58,7 +58,7 @@ public final class GameState {
 
         // TODO: early exit: wenn das Spiel nicht läuft oder keine Blickrichtung gesetzt ist: kein
         // Änderung
-        if (!this.status.isRunning() || this.pendingDirection == null) {
+        if (!this.status.isRunning() || this.pendingDirection == Direction.NONE) {
             return this;
         }
 
@@ -72,21 +72,22 @@ public final class GameState {
         Position nextPosition = this.snake.nextHead(pendingDirection);
         Pin nextPositionPin = null;
         for (Pin pin : this.pins) {
-            if (pin.position().equals(nextPosition)) {
+            if (pin.position() == nextPosition) {
                 nextPositionPin = pin;
                 break;
             }
         }
+        boolean occupies = this.snake.occupies(nextPosition);
         if (!level.isInside(nextPosition)) {
             this.status = Status.LOST_OUT_OF_BOUNDS;
         } else if (level.cellAt(nextPosition) == CellType.WALL) {
-            this.pendingDirection = null;
-        } else if (snake.occupies(nextPosition)) {
+            this.pendingDirection = Direction.NONE;
+        } else if (occupies) {
             this.status = Status.LOST_SELF_COLLISION;
         } else if (nextPositionPin != null
                 && (nextPositionPin.state().isSet()
                         || this.pendingDirection != nextPositionPin.activationDirection())) {
-            this.pendingDirection = null;
+            this.pendingDirection = Direction.NONE;
         }
         // TODO: aktiviere einen noch nicht gesetzten Pin, wenn die Schlange in der richtigen
         // Richtung auf den Pin gehen würde (die Schlange darf dabei aber nicht auf den Pin gehen)
@@ -112,7 +113,7 @@ public final class GameState {
         }
 
         // TODO: anderenfalls: bewege die Schlange um einen Schritt in Blickrichtung (falls gesetzt)
-        if (this.pendingDirection != null) {
+        if (this.pendingDirection != Direction.NONE) {
             this.snake = this.snake.grow(pendingDirection);
         }
         return this;
