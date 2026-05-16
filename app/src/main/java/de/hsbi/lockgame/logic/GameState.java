@@ -113,7 +113,7 @@ public final class GameState {
 
         // TODO: anderenfalls: bewege die Schlange um einen Schritt in Blickrichtung (falls gesetzt)
         if (this.pendingDirection != null) {
-            this.snake.grow(pendingDirection);
+            this.snake = this.snake.grow(pendingDirection);
         }
         return this;
         // throw new UnsupportedOperationException("method not implemented yet");
