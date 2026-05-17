@@ -8,6 +8,7 @@ import de.hsbi.lockgame.model.*;
 import de.hsbi.lockgame.settings.LevelConstants;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 
@@ -22,8 +23,14 @@ public class GameStateTest {
         }
     }
 
-    private GameState updateState(GameState state, Direction dir) {
-        return new GameState(state.level(), state.snake(), state.pins(), state.status(), dir);
+    private GameState move(GameState s, Direction... dirs) {
+        return Arrays.stream(dirs)
+                .reduce(
+                        s,
+                        (st, d) ->
+                                new GameState(st.level(), st.snake(), st.pins(), st.status(), d)
+                                        .tick(),
+                        (_, b) -> b);
     }
 
     @Test
@@ -34,24 +41,22 @@ public class GameStateTest {
         assertNotNull(level);
         List<Position> positionSnake = new ArrayList<>();
         positionSnake.add(level.snakeStart());
+        Snake snake = new Snake(positionSnake);
+        List<Pin> pins = level.pins();
+        GameState.Status status = GameState.Status.RUNNING;
+        Direction direction = Direction.NONE;
         // when
-        // we create a GameState object and move it a couple of times
-        GameState state =
-                new GameState(
-                        level,
-                        new Snake(positionSnake),
-                        level.pins(),
-                        GameState.Status.RUNNING,
-                        Direction.UP);
-        state = state.tick();
-        state = this.updateState(state, Direction.LEFT);
-        state = state.tick();
-        state = this.updateState(state, Direction.UP);
-        state = state.tick();
+        // we create a GameState object
+        GameState state = new GameState(level, snake, pins, status, direction);
 
         // Then
-        // We assume that the head of the snake is at it's correct plays
-        assertEquals(new Position(17, 2), state.snake().head());
+        // We assume that the GameState variables did not get changed faultly
+        assertNotNull(state);
+        assertEquals(level, state.level());
+        assertEquals(snake, state.snake());
+        assertEquals(pins, state.pins());
+        assertEquals(status, state.status());
+        assertEquals(direction, state.pendingDirection());
     }
 
     @Test
@@ -71,13 +76,7 @@ public class GameStateTest {
                         level.pins(),
                         GameState.Status.RUNNING,
                         Direction.NONE);
-        state = state.tick();
-        state = this.updateState(state, Direction.UP);
-        state = state.tick();
-        state = this.updateState(state, Direction.LEFT);
-        state = state.tick();
-        state = this.updateState(state, Direction.UP);
-        state = state.tick();
+        state = this.move(state, Direction.UP, Direction.LEFT, Direction.UP);
         // then
         // the snake position is at the right place
         assertEquals(new Position(17, 2), state.snake().head());
@@ -117,14 +116,7 @@ public class GameStateTest {
         GameState state =
                 new GameState(level, snake, level.pins(), GameState.Status.RUNNING, Direction.NONE);
         // let the snake eat itself by going in state circle in the next tick
-        state = this.updateState(state, Direction.UP);
-        state = state.tick();
-        state = this.updateState(state, Direction.LEFT);
-        state = state.tick();
-        state = this.updateState(state, Direction.DOWN);
-        state = state.tick();
-        state = this.updateState(state, Direction.RIGHT);
-        state = state.tick();
+        state = this.move(state, Direction.UP, Direction.LEFT, Direction.DOWN, Direction.RIGHT);
 
         // then
         // the game should be over
@@ -144,8 +136,7 @@ public class GameStateTest {
         // the position of the given snake is out of bounds
         GameState state =
                 new GameState(level, snake, level.pins(), GameState.Status.RUNNING, Direction.NONE);
-        state = this.updateState(state, Direction.UP);
-        state = state.tick();
+        state = this.move(state, Direction.UP);
 
         // then
         // the game should be lost with an OOB
@@ -164,12 +155,7 @@ public class GameStateTest {
         // when
         GameState state =
                 new GameState(level, snake, level.pins(), GameState.Status.RUNNING, Direction.NONE);
-        state = this.updateState(state, Direction.LEFT);
-        state = state.tick();
-        state = this.updateState(state, Direction.LEFT);
-        state = state.tick();
-        state = this.updateState(state, Direction.LEFT);
-        state = state.tick();
+        state = this.move(state, Direction.LEFT, Direction.LEFT, Direction.LEFT);
 
         // then
         // The head of the snake should stop and not move onto (15, 4) where to pin lies
@@ -193,12 +179,7 @@ public class GameStateTest {
         // we get the pins and then navigate the snake to a pin and compare the pins before and
         // after
         List<Pin> pinsBefore = state.pins();
-        state = this.updateState(state, Direction.LEFT);
-        state = state.tick();
-        state = this.updateState(state, Direction.LEFT);
-        state = state.tick();
-        state = this.updateState(state, Direction.LEFT);
-        state = state.tick();
+        state = this.move(state, Direction.LEFT, Direction.LEFT, Direction.LEFT);
         List<Pin> pinsAfter = state.pins();
         // then
         // the list should not be equal because of a different pin has been set
@@ -221,16 +202,16 @@ public class GameStateTest {
         // after but the result should be same, because we are not coming from the activation
         // direction
         List<Pin> pinsBefore = state.pins();
-        for (int i = 0; i < 3; i++) {
-            state = this.updateState(state, Direction.UP);
-            state = state.tick();
-        }
-        for (int i = 0; i < 3; i++) {
-            state = this.updateState(state, Direction.LEFT);
-            state = state.tick();
-        }
-        state = this.updateState(state, Direction.DOWN);
-        state = state.tick();
+        state =
+                this.move(
+                        state,
+                        Direction.UP,
+                        Direction.UP,
+                        Direction.UP,
+                        Direction.LEFT,
+                        Direction.LEFT,
+                        Direction.LEFT,
+                        Direction.DOWN);
         List<Pin> pinsAfter = state.pins();
         // then
         // the list should be equal because the pins state did not change
@@ -248,11 +229,9 @@ public class GameStateTest {
         Snake snake = new Snake(positionSnake);
         // when
         // we simulate a game finish through getting the achievement of all pins being set
+        // lambda
         List<Pin> pins = level.pins();
-        List<Pin> pinsNew = new ArrayList<>();
-        for (Pin pin : pins) {
-            pinsNew.add(pin.withState(Pin.State.HIGH));
-        }
+        List<Pin> pinsNew = pins.stream().map(pin -> pin.withState(Pin.State.HIGH)).toList();
         // NOTE: we need to set direction to anything else than None because else the tick ends
         // without doing anything
         GameState state =
