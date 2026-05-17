@@ -75,13 +75,13 @@ public final class GameState {
         // (d) Schlange würde auf einen Pin gehen (Pin bereits gesetzt oder Schlange kommt nicht in
         // der Aktivierungsrichtung): Blockiert (keine Bewegung, Blickrichtung "none")
         Position nextPosition = gsNewSnake.nextHead(pendingDirection);
-        Pin nextPositionPin = null;
-        for (Pin pin : gsNewPins) {
-            if (nextPosition.equals(pin.position())) {
-                nextPositionPin = pin;
-                break;
-            }
-        }
+        // lambda
+        Pin nextPositionPin =
+                gsNewPins.stream()
+                        .filter(pin -> nextPosition.equals(pin.position()))
+                        .findFirst()
+                        .orElse(null);
+
         boolean occupies = gsNewSnake.occupies(nextPosition);
         if (!gsNewLevel.isInside(nextPosition)) {
             gsNewStatus = Status.LOST_OUT_OF_BOUNDS;
@@ -106,15 +106,12 @@ public final class GameState {
             }
         }
 
-        if (gsNewStatus.isRunning()) {
-            // Check if all pins are set else keep running the game
+        // lambda
+        // Check if all pins are set else keep running the game
+        boolean allSet = gsNewPins.stream().allMatch(pin -> pin.state().isSet());
+
+        if (gsNewStatus.isRunning() && allSet) {
             gsNewStatus = Status.WON;
-            for (Pin pin : gsNewPins) {
-                if (!pin.state().isSet()) {
-                    gsNewStatus = Status.RUNNING;
-                    break;
-                }
-            }
         }
 
         // TODO: anderenfalls: bewege die Schlange um einen Schritt in Blickrichtung (falls gesetzt)

@@ -8,6 +8,7 @@ import de.hsbi.lockgame.model.Snake;
 import de.hsbi.lockgame.ui.GamePanel;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 // TODO: Die GameEngine verwaltet den GameState.
 
@@ -32,7 +33,7 @@ public final class GameEngine {
         // TODO: lege eine neue GameEngine mit den übergebenen Informationen an
         this.level = level;
 
-        List<Position> positionSnake = new ArrayList<Position>();
+        List<Position> positionSnake = new ArrayList<>();
         positionSnake.add(level.snakeStart());
 
         this.state =
@@ -69,9 +70,10 @@ public final class GameEngine {
                         this.state.pins(),
                         this.state.status(),
                         d);
-        if (this.panel != null) {
-            this.panel.update(this.state);
-        }
+        // method reference
+        // if not panel call panel update function
+        Optional.ofNullable(panel).ifPresent(this::notifyPanel);
+
         // throw new UnsupportedOperationException("method not implemented yet");
     }
 
@@ -82,9 +84,13 @@ public final class GameEngine {
         // GameState einen Schritt weiter
         this.state = this.state.tick();
 
+        // method reference
         // Observer benachrichtigen
-        if (this.panel != null) {
-            this.panel.update(this.state);
-        }
+        // if not panel call panel update function
+        Optional.ofNullable(panel).ifPresent(this::notifyPanel);
+    }
+
+    private void notifyPanel(GamePanel p) {
+        p.update(this.state);
     }
 }

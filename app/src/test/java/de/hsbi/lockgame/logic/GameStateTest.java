@@ -23,13 +23,17 @@ public class GameStateTest {
         }
     }
 
-    private GameState move(GameState s, Direction... dirs) {
-        return Arrays.stream(dirs)
+    private GameState move(GameState s, Direction... directions) {
+        // for every direction provided we apply them to the GameState object and take the new
+        // object
+        return Arrays.stream(directions)
                 .reduce(
                         s,
+                        // lambda
                         (st, d) ->
                                 new GameState(st.level(), st.snake(), st.pins(), st.status(), d)
                                         .tick(),
+                        // lambda
                         (_, b) -> b);
     }
 
