@@ -41,7 +41,7 @@ public class GameStateTest {
                         level.pins(),
                         GameState.Status.RUNNING,
                         Direction.RIGHT);
-        state.tick();
+        state = state.tick();
         // then
         assertEquals(Direction.NONE, state.pendingDirection());
     }
@@ -59,13 +59,14 @@ public class GameStateTest {
                 new GameState(level, snake, level.pins(), GameState.Status.RUNNING, Direction.NONE);
         // let the snake eat itself by going in state circle in the next tick
         state = updateState(state, Direction.UP);
-        state.tick();
+        state = state.tick();
         state = updateState(state, Direction.LEFT);
-        state.tick();
+        state = state.tick();
         state = updateState(state, Direction.DOWN);
-        state.tick();
+        state = state.tick();
         state = updateState(state, Direction.RIGHT);
-        state.tick();
+        state = state.tick();
+        ;
         // then
         // the game should be over
         assertEquals(GameState.Status.LOST_SELF_COLLISION, state.status());
@@ -86,14 +87,63 @@ public class GameStateTest {
         // after
         List<Pin> pinsBefore = state.pins();
         state = updateState(state, Direction.LEFT);
-        state.tick();
+        state = state.tick();
         state = updateState(state, Direction.LEFT);
-        state.tick();
+        state = state.tick();
         state = updateState(state, Direction.LEFT);
-        state.tick();
+        state = state.tick();
         List<Pin> pinsAfter = state.pins();
         // then
         // the list should not be equal because of a different pin
         assertNotEquals(pinsAfter, pinsBefore);
+    }
+
+    @Test
+    public void testInteractionPinNotEntered() {
+        // given
+        Level level = this.defaultLevel();
+        assertNotNull(level);
+        List<Position> positionSnake = new ArrayList<Position>();
+        positionSnake.add(level.snakeStart());
+        Snake snake = new Snake(positionSnake);
+        // when
+        GameState state =
+                new GameState(level, snake, level.pins(), GameState.Status.RUNNING, Direction.NONE);
+        state = updateState(state, Direction.LEFT);
+        state = state.tick();
+        state = updateState(state, Direction.LEFT);
+        state = state.tick();
+        state = updateState(state, Direction.LEFT);
+        state = state.tick();
+
+        // then
+        // The head of the snake should stop and not move onto (15, 4) where to pin lies
+        Position positonNotAllowed = new Position(16, 4);
+        Position positionSnakeHead = state.snake().head();
+        assertEquals(positonNotAllowed, positionSnakeHead);
+    }
+
+    @Test
+    public void testGameWon() {
+        // given
+        Level level = this.defaultLevel();
+        assertNotNull(level);
+        List<Position> positionSnake = new ArrayList<Position>();
+        positionSnake.add(level.snakeStart());
+        Snake snake = new Snake(positionSnake);
+        // when
+        // we simulate a game finish through getting the achievement of all pins being set
+        List<Pin> pins = level.pins();
+        List<Pin> pinsNew = new ArrayList<Pin>();
+        for (Pin pin : pins) {
+            pinsNew.add(pin.withState(Pin.State.HIGH));
+        }
+        // NOTE: we need to set direction to anything else than None because else the game doesn't recognize the win
+        GameState state =
+                new GameState(level, snake, pinsNew, GameState.Status.RUNNING, Direction.LEFT);
+        state = state.tick();
+        // then
+        // The result of having all pins set should be a win
+        assertEquals(GameState.Status.WON, state.status());
     }
 }
