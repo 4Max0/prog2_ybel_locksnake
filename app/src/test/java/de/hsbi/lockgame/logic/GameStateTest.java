@@ -65,12 +65,12 @@ public class GameStateTest {
         // when
         // we move the snake a couple of times
         GameState state =
-            new GameState(
-                level,
-                new Snake(positionSnake),
-                level.pins(),
-                GameState.Status.RUNNING,
-                Direction.NONE);
+                new GameState(
+                        level,
+                        new Snake(positionSnake),
+                        level.pins(),
+                        GameState.Status.RUNNING,
+                        Direction.NONE);
         state = state.tick();
         state = this.updateState(state, Direction.UP);
         state = state.tick();
@@ -143,7 +143,7 @@ public class GameStateTest {
         // when
         // the position of the given snake is out of bounds
         GameState state =
-            new GameState(level, snake, level.pins(), GameState.Status.RUNNING, Direction.NONE);
+                new GameState(level, snake, level.pins(), GameState.Status.RUNNING, Direction.NONE);
         state = this.updateState(state, Direction.UP);
         state = state.tick();
 

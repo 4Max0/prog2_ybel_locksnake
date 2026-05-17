@@ -61,6 +61,7 @@ public final class GameEngine {
         // TODO: aktualisiere den Blickwinkel der Schlange (GameState)
         // TODO: benachrichtige alle Observer und gibt den neuen Spielzustand mit (Neuzeichnen der
         // Spielfläche)
+        // Observer benachrichtigen
         this.state =
                 new GameState(
                         this.state.level(),
@@ -68,7 +69,6 @@ public final class GameEngine {
                         this.state.pins(),
                         this.state.status(),
                         d);
-
         if (this.panel != null) {
             this.panel.update(this.state);
         }
